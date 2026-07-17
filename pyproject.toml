@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spendcap"
+version = "0.1.0"
+description = "Real-time spend tracking, cost prediction, and runaway-loop circuit breakers for LLM API calls. Zero dependencies."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Shreyansh Goyal", email = "shreyanshgoyal1203@gmail.com" }]
+requires-python = ">=3.9"
+keywords = [
+  "llm", "cost", "budget", "tokens", "agents",
+  "anthropic", "openai", "gemini", "circuit-breaker",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.urls]
+# TODO: update after creating the GitHub repo
+Homepage = "https://github.com/YOUR-USERNAME/spendcap"
+Issues = "https://github.com/YOUR-USERNAME/spendcap/issues"
+
+[tool.setuptools]
+packages = ["spendcap"]
+
+[tool.setuptools.package-data]
+spendcap = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
