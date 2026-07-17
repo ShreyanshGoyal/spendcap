@@ -32,9 +32,8 @@ classifiers = [
 dev = ["pytest>=7"]
 
 [project.urls]
-# TODO: update after creating the GitHub repo
-Homepage = "https://github.com/YOUR-USERNAME/spendcap"
-Issues = "https://github.com/YOUR-USERNAME/spendcap/issues"
+Homepage = "https://github.com/ShreyanshGoyal/spendcap"
+Issues = "https://github.com/ShreyanshGoyal/spendcap/issues"
 
 [tool.setuptools]
 packages = ["spendcap"]
