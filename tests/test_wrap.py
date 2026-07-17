@@ -52,7 +52,7 @@ def test_wrap_anthropic_cache_fields():
     client = meter.wrap(fake)
     client.messages.create(model="claude-haiku-4-5", messages=[])
     rec = meter.records[0]
-    # Anthropic input_tokens already excludes cache traffic — no subtraction.
+    # Anthropic input_tokens already excludes cache traffic; no subtraction.
     assert rec.input_tokens == 100
     assert rec.cached_input_tokens == 2000
     assert rec.cache_write_tokens == 500

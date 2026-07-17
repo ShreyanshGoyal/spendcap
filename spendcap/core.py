@@ -30,7 +30,7 @@ class BudgetExceededError(RuntimeError):
         self.task = task
         scope = f"task '{task}'" if task else "meter"
         super().__init__(
-            f"spendcap: {scope} budget exceeded — spent ${spent:.4f} of ${cap:.2f} cap"
+            f"spendcap: {scope} budget exceeded (spent ${spent:.4f} of ${cap:.2f} cap)"
         )
 
 
@@ -53,7 +53,7 @@ class Budget:
         usd: the cap.
         warn_at: fraction of the cap at which the warn callback fires (once).
         hard: if True (default), crossing the cap raises BudgetExceededError.
-            If False, spendcap only warns — "observe mode".
+            If False, spendcap only warns ("observe mode").
         on_warn: optional callback ``(spent, cap) -> None``; defaults to
             ``warnings.warn``.
     """
@@ -72,8 +72,8 @@ class Budget:
             self.on_warn(spent, self.usd)
         else:
             warnings.warn(
-                f"spendcap: spent ${spent:.4f} — "
-                f"{spent / self.usd:.0%} of the ${self.usd:.2f} budget",
+                f"spendcap: spent ${spent:.4f} "
+                f"({spent / self.usd:.0%} of the ${self.usd:.2f} budget)",
                 stacklevel=3,
             )
 
@@ -88,7 +88,7 @@ class Meter:
 
     Use it one of two ways (or both):
 
-    1. Wrap a provider client — every call is metered automatically::
+    1. Wrap a provider client; every call is metered automatically::
 
         meter = Meter(budget=Budget(usd=5.00))
         client = meter.wrap(anthropic.Anthropic())
@@ -151,7 +151,7 @@ class Meter:
     def check(self, task: Optional[str] = None) -> None:
         """Raise BudgetExceededError if the cap (or a task cap) is spent.
 
-        Wrapped clients call this before every API call — that is the
+        Wrapped clients call this before every API call; that is the
         circuit breaker.
         """
         if self.budget is not None and self.budget.hard and self._spent >= self.budget.usd:
@@ -191,7 +191,7 @@ class Meter:
                 self._unknown_models[model] = self._unknown_models.get(model, 0) + 1
             if first_time:
                 warnings.warn(
-                    f"spendcap: unknown model '{model}' — cost recorded as $0. "
+                    f"spendcap: unknown model '{model}'; cost recorded as $0. "
                     f"Register a price with spendcap.register_model().",
                     stacklevel=2,
                 )

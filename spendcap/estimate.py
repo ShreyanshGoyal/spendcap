@@ -37,7 +37,7 @@ class LoopEstimate:
 
     def summary(self) -> str:
         lines = [
-            f"Loop estimate — {self.model}, {self.turns} turns",
+            f"Loop estimate: {self.model}, {self.turns} turns",
             f"  history growth: {self.new_tokens_per_turn:,} new + "
             f"{self.output_tokens_per_turn:,} output tokens/turn, "
             f"{self.system_tokens:,} system tokens",

@@ -2,7 +2,7 @@
 
 All prices are **USD per million tokens**, current as of :data:`PRICING_AS_OF`.
 Prices change. Override or extend at runtime with :func:`register_model` or
-:func:`load_pricing` — never fork the library just to fix a price.
+:func:`load_pricing`; never fork the library just to fix a price.
 """
 
 from __future__ import annotations

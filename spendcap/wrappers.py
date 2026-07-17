@@ -1,6 +1,6 @@
 """Transparent client proxy: meter any SDK whose responses carry usage data.
 
-No provider SDK is imported here — everything is duck-typed, so the same
+No provider SDK is imported here; everything is duck-typed, so the same
 proxy handles Anthropic (input_tokens/output_tokens), OpenAI chat completions
 (prompt_tokens/completion_tokens), OpenAI responses (input_tokens +
 input_tokens_details.cached_tokens), and dict-shaped responses.

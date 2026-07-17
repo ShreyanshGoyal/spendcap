@@ -43,9 +43,9 @@ def test_soft_budget_never_raises():
 def test_warn_threshold_fires_once():
     warned = []
     m = Meter(budget=Budget(usd=1.00, warn_at=0.5, on_warn=lambda s, c: warned.append((s, c))))
-    m.record("claude-haiku-4-5", input_tokens=400_000)  # $0.40 — below
+    m.record("claude-haiku-4-5", input_tokens=400_000)  # $0.40, below the threshold
     assert warned == []
-    m.record("claude-haiku-4-5", input_tokens=200_000)  # $0.60 — crosses 50%
+    m.record("claude-haiku-4-5", input_tokens=200_000)  # $0.60, crosses 50%
     m.record("claude-haiku-4-5", input_tokens=100_000)  # $0.70
     assert len(warned) == 1
     assert warned[0][1] == 1.00

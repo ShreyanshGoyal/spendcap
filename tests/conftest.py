@@ -1,4 +1,4 @@
-"""Fake provider SDKs — no network, no dependencies."""
+"""Fake provider SDKs: no network, no dependencies."""
 
 from dataclasses import dataclass, field
 from typing import Optional

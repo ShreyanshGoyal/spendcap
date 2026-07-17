@@ -95,7 +95,7 @@ class Report:
             pct = (self.spent_usd / self.cap_usd * 100) if self.cap_usd else 0.0
             cap = f" of ${self.cap_usd:.2f} cap ({pct:.1f}%)"
         lines = [
-            f"spendcap report — spent ${self.spent_usd:.4f}{cap}",
+            f"spendcap report: spent ${self.spent_usd:.4f}{cap}",
             f"  calls: {self.calls}   input: {self.input_tokens:,} tok   "
             f"output: {self.output_tokens:,} tok   cached: {self.cached_input_tokens:,} tok",
         ]

@@ -32,7 +32,7 @@ class Response:
 
 class Messages:
     def create(self, *, model, messages, **kw):
-        # input grows with the conversation we send — like a real agent loop
+        # input grows with the conversation we send, like a real agent loop
         input_tokens = sum(len(m["content"]) // 4 for m in messages)
         return Response(model=model, usage=Usage(input_tokens, 300))
 
@@ -57,7 +57,7 @@ meter = spendcap.Meter(
     budget=spendcap.Budget(
         usd=CAP,
         warn_at=0.8,
-        on_warn=lambda spent, cap: print(f"   ⚠ warn: ${spent:.3f} spent — 80% of ${cap:.2f} cap"),
+        on_warn=lambda spent, cap: print(f"   ⚠ warn: ${spent:.3f} spent (80% of ${cap:.2f} cap)"),
     )
 )
 client = meter.wrap(FakeAnthropic())
@@ -65,7 +65,7 @@ client = meter.wrap(FakeAnthropic())
 history = [{"role": "user", "content": "Refactor my codebase." * 100}]
 turn = 0
 try:
-    while True:  # oops: no exit condition — a classic runaway loop
+    while True:  # oops: no exit condition, a classic runaway loop
         turn += 1
         resp = client.messages.create(model=MODEL, messages=history)
         history.append({"role": "assistant", "content": "x" * 1200})
@@ -74,7 +74,7 @@ try:
             print(f"   turn {turn:>3}: spent ${meter.spent:.4f}  (remaining ${meter.remaining:.4f})")
 except spendcap.BudgetExceededError as e:
     print(f"\n   🛑 {e}")
-    print(f"   loop stopped at turn {turn} — the API was never called again.\n")
+    print(f"   loop stopped at turn {turn}. The API was never called again.\n")
 
 print("3) Where did the money go?\n")
 print(meter.report())

@@ -1,4 +1,4 @@
-"""spendcap — real-time spend tracking, cost prediction, and runaway-loop
+"""spendcap: real-time spend tracking, cost prediction, and runaway-loop
 circuit breakers for LLM API calls.
 
 Quickstart::

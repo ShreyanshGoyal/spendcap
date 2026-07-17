@@ -2,18 +2,27 @@
 
 **Real-time spend tracking, cost prediction, and runaway-loop circuit breakers for LLM API calls.**
 
-Your agent loop just spent $40 while you got coffee. Provider dashboards tell you *after* the money is gone. `spendcap` stops the loop *before* the next call — and tells you what a loop will cost before you run it at all.
+[![tests](https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml/badge.svg)](https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml)
+[![python](https://img.shields.io/badge/python-3.9%2B-blue)](https://github.com/ShreyanshGoyal/spendcap)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](pyproject.toml)
 
-- 🧮 **Exact metering** — costs computed from the token counts your provider returns, not tokenizer guesses
-- 🛑 **Circuit breaker** — set a hard USD cap; the call that would exceed it raises instead of hitting the API
-- 🔮 **Cost prediction** — closed-form estimate of an agent loop's cost (input grows *quadratically* with turns; most people underestimate this by 10–50x)
-- 🏷️ **Task scoping** — attribute spend to named tasks, with optional per-task caps
-- 📊 **Reports** — by model, by task, as text or JSON
-- **Zero dependencies.** Works with the Anthropic and OpenAI SDKs (sync + async) and any duck-typed client whose responses carry `usage`.
+Your agent loop just spent $40 while you got coffee. Provider dashboards tell you *after* the money is gone. `spendcap` stops the loop *before* the next call, and tells you what a loop will cost before you run it at all.
 
+- 🧮 **Exact metering.** Costs computed from the token counts your provider returns, not tokenizer guesses.
+- 🛑 **Circuit breaker.** Set a hard USD cap; the call that would exceed it raises instead of hitting the API.
+- 🔮 **Cost prediction.** Closed-form estimate of an agent loop's cost. Input grows *quadratically* with turns; most people underestimate this by 10x to 50x.
+- 🏷️ **Task scoping.** Attribute spend to named tasks, with optional per-task caps.
+- 📊 **Reports.** By model, by task, as text or JSON.
+- 🪶 **Zero dependencies.** Works with the Anthropic and OpenAI SDKs (sync and async) and any duck-typed client whose responses carry `usage`.
+
+## Installation
+
+```bash
+pip install git+https://github.com/ShreyanshGoyal/spendcap.git
 ```
-pip install spendcap
-```
+
+Python 3.9+, no runtime dependencies. A PyPI release is coming soon.
 
 ## Quickstart
 
@@ -42,10 +51,10 @@ try:
         resp = client.messages.create(...)   # metered every call
         ...
 except spendcap.BudgetExceededError as e:
-    print(e)  # spendcap: meter budget exceeded — spent $5.0031 of $5.00 cap
+    print(e)  # spendcap: meter budget exceeded (spent $5.0031 of $5.00 cap)
 ```
 
-The call that *crosses* the cap still returns its response (you paid for it); the breaker refuses the one after. A warning fires once at 80% of the cap (configurable: `Budget(usd=5, warn_at=0.5, on_warn=my_callback)`). Set `Budget(hard=False)` for observe-only mode.
+The call that *crosses* the cap still returns its response (you paid for it); the breaker refuses the one after. A warning fires once at 80% of the cap, configurable via `Budget(usd=5, warn_at=0.5, on_warn=my_callback)`. Set `Budget(hard=False)` for observe-only mode.
 
 ## Predict a loop's cost before running it
 
@@ -60,7 +69,7 @@ print(est.summary())
 ```
 
 ```
-Loop estimate — claude-haiku-4-5, 200 turns
+Loop estimate: claude-haiku-4-5, 200 turns
   history growth: 1,200 new + 300 output tokens/turn, 1,500 system tokens
   total input: 30,390,000 tok   total output: 60,000 tok
   estimated cost: $30.69   (turn 1: $0.0042 -> turn 200: $0.3027, 72x growth)
@@ -87,7 +96,7 @@ print(meter.report())
 ```
 
 ```
-spendcap report — spent $2.4312 of $5.00 cap (48.6%)
+spendcap report: spent $2.4312 of $5.00 cap (48.6%)
   calls: 41   input: 1,912,340 tok   output: 96,200 tok   cached: 210,000 tok
   by model:
     claude-haiku-4-5            38 calls   $2.1201
@@ -101,18 +110,32 @@ spendcap report — spent $2.4312 of $5.00 cap (48.6%)
 
 ## No wrapper? Record manually
 
-Works with any provider, any framework — just feed it the usage numbers:
+Works with any provider and any framework. Just feed it the usage numbers:
 
 ```python
 meter.record("gpt-5.4-mini", input_tokens=1200, output_tokens=340)
 meter.record("claude-haiku-4-5", input_tokens=100, cached_input_tokens=2000)
 ```
 
+## API at a glance
+
+| API | What it does |
+| --- | --- |
+| `Meter(budget=Budget(usd=5.00))` | Create a meter with a $5 hard cap |
+| `meter.wrap(client)` | Return a metered proxy of any provider client |
+| `meter.spent` / `meter.remaining` | Exact USD totals, live |
+| `meter.task(name, cap_usd=...)` | Context manager: tag and cap a block of calls |
+| `meter.record(model, ...)` | Meter a call manually from raw token counts |
+| `meter.report()` | Spend breakdown by model and task (str or JSON) |
+| `estimate_loop(model, turns, ...)` | Predict an agent loop's cost before running it |
+| `compare_models([...], turns=...)` | Rank models by cost for the same loop |
+| `register_model(...)` / `load_pricing(...)` | Override or extend the price table at runtime |
+
 ## Pricing data
 
-Built-in prices (USD per 1M tokens) for current Anthropic, OpenAI, and Google models, verified **2026-07-17** (`spendcap.PRICING_AS_OF`). Model IDs resolve fuzzily: `anthropic/claude-haiku-4-5-20251001` → `claude-haiku-4-5`. Unknown models warn once and book at $0 (or raise, with `Meter(strict_pricing=True)`).
+Built-in prices (USD per 1M tokens) for current Anthropic, OpenAI, and Google models, verified **2026-07-17** (`spendcap.PRICING_AS_OF`). Model IDs resolve fuzzily: `anthropic/claude-haiku-4-5-20251001` resolves to `claude-haiku-4-5`. Unknown models warn once and book at $0, or raise with `Meter(strict_pricing=True)`.
 
-Prices change — override anything at runtime, no fork needed:
+Prices change. Override anything at runtime, no fork needed:
 
 ```python
 spendcap.register_model("groq-llama-4-70b", input_per_m=0.59, output_per_m=0.79)
@@ -125,10 +148,22 @@ Cache accounting mirrors the providers: Anthropic cache reads bill at the cached
 
 ## Demo
 
-No API key needed — a fake client that bills like the real thing:
+No API key needed. A fake client that bills like the real thing:
+
+```bash
+python examples/runaway_agent.py
+```
 
 ```
-python examples/runaway_agent.py
+2) Run the 'agent' under a $1.00 hard cap:
+
+   turn  10: spent $0.0489  (remaining $0.9511)
+   ...
+   ⚠ warn: $0.816 spent (80% of $1.00 cap)
+   turn  50: spent $0.8816  (remaining $0.1184)
+
+   🛑 spendcap: meter budget exceeded (spent $1.0209 of $1.00 cap)
+   loop stopped at turn 55. The API was never called again.
 ```
 
 ## Limitations (v0.1)
@@ -139,11 +174,20 @@ python examples/runaway_agent.py
 
 ## Roadmap
 
-Streaming usage capture, per-provider price auto-refresh, persistent ledgers (SQLite), a CLI (`spendcap report`), LangChain/agent-framework callbacks.
+- Streaming usage capture
+- Per-provider price auto-refresh
+- Persistent ledgers (SQLite)
+- A CLI (`spendcap report`)
+- LangChain and agent-framework callbacks
 
 ## Contributing
 
-Issues and PRs welcome — especially price-table updates and new provider usage shapes. Run `pip install -e ".[dev]" && pytest`.
+Issues and PRs are welcome, especially price-table updates and new provider usage shapes.
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
 
 ## License
 
