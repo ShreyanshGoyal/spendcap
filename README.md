@@ -1,15 +1,29 @@
-# spendcap
+<h1 align="center">spendcap</h1>
 
-**Real-time spend tracking, cost prediction, and runaway-loop circuit breakers for LLM API calls.**
+<p align="center"><b>Real-time spend tracking, cost prediction, and runaway-loop circuit breakers for LLM API calls.</b></p>
 
-[![tests](https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml/badge.svg)](https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml)
-[![python](https://img.shields.io/badge/python-3.9%2B-blue)](https://github.com/ShreyanshGoyal/spendcap)
-[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](pyproject.toml)
+<p align="center">
+  <a href="https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml"><img src="https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml/badge.svg" alt="tests"></a>
+  <a href="https://github.com/ShreyanshGoyal/spendcap"><img src="https://img.shields.io/badge/python-3.9%2B-blue" alt="python 3.9+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="zero dependencies"></a>
+</p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ShreyanshGoyal/spendcap/main/docs/demo.gif" alt="spendcap demo: the loop's cost is predicted up front, then a $1.00 hard cap stops a runaway agent loop at turn 55" width="733">
 </p>
+
+<p align="center">
+  <a href="#why-spendcap">Why</a> ·
+  <a href="#installation">Install</a> ·
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#predict-a-loops-cost-before-running-it">Cost prediction</a> ·
+  <a href="#api-at-a-glance">API</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
+
+---
 
 Your agent loop just spent $40 while you got coffee. Provider dashboards tell you *after* the money is gone. `spendcap` stops the loop *before* the next call, and tells you what a loop will cost before you run it at all.
 
@@ -19,6 +33,21 @@ Your agent loop just spent $40 while you got coffee. Provider dashboards tell yo
 - 🏷️ **Task scoping.** Attribute spend to named tasks, with optional per-task caps.
 - 📊 **Reports.** By model, by task, as text or JSON.
 - 🪶 **Zero dependencies.** Works with the Anthropic and OpenAI SDKs (sync and async) and any duck-typed client whose responses carry `usage`.
+
+## Why spendcap
+
+Every existing way to watch LLM spend reports it after the fact. Enforcement, when it exists at all, lives in infrastructure you have to deploy. spendcap moves both into the process that is actually spending the money:
+
+|  | spendcap | Provider dashboard | Observability platform | Gateway proxy |
+| --- | --- | --- | --- | --- |
+| Live spend visibility | Exact, in-process | Hours behind | Near real time | Yes |
+| Stops the next call once a cap is spent | **Yes, raises before the API is reached** | No | No (alerts) | Some, per API key |
+| Predicts a loop's cost before you run it | **Yes, closed form** | No | No | No |
+| Per-task attribution with per-task caps | Yes | No | Tags, no caps | Per key |
+| Setup | `pip install`, wrap your client | None | SDK plus external service | Deploy a proxy, route traffic |
+| Runtime dependencies | **Zero** | n/a | Vendor SDK | Infrastructure |
+
+These tools are complementary, not competing: platforms like Langfuse or Helicone give you dashboards and traces across services, and a LiteLLM proxy gives you org-wide key management. spendcap is the last line of defense inside the process: the library import that guarantees a runaway loop stops itself.
 
 ## Installation
 
@@ -59,6 +88,25 @@ except spendcap.BudgetExceededError as e:
 ```
 
 The call that *crosses* the cap still returns its response (you paid for it); the breaker refuses the one after. A warning fires once at 80% of the cap, configurable via `Budget(usd=5, warn_at=0.5, on_warn=my_callback)`. Set `Budget(hard=False)` for observe-only mode.
+
+## How it works
+
+`meter.wrap()` returns a transparent proxy around your client. Attribute access passes through untouched; only actual calls do metering work:
+
+```mermaid
+sequenceDiagram
+    participant Code as your code
+    participant Proxy as spendcap proxy
+    participant API as provider API
+    Code->>Proxy: client.messages.create(...)
+    Proxy->>Proxy: budget check (raises if cap spent)
+    Proxy->>API: call forwarded unchanged
+    API-->>Proxy: response with usage
+    Proxy->>Proxy: record exact cost on the meter
+    Proxy-->>Code: response, untouched
+```
+
+No provider SDK is imported and nothing is monkeypatched: the proxy is duck-typed against the `usage` shapes of the Anthropic and OpenAI SDKs (both API styles), handles sync and async clients with the same code path, and understands each provider's cache-billing semantics. The original client is always available as `client.__wrapped__`.
 
 ## Predict a loop's cost before running it
 
@@ -158,40 +206,35 @@ No API key needed. A fake client that bills like the real thing:
 python examples/runaway_agent.py
 ```
 
-```
-2) Run the 'agent' under a $1.00 hard cap:
-
-   turn  10: spent $0.0489  (remaining $0.9511)
-   ...
-   ⚠ warn: $0.816 spent (80% of $1.00 cap)
-   turn  50: spent $0.8816  (remaining $0.1184)
-
-   🛑 spendcap: meter budget exceeded (spent $1.0209 of $1.00 cap)
-   loop stopped at turn 55. The API was never called again.
-```
+The loop's cost is predicted up front ($30.69 for 200 turns), then a $1.00 hard cap stops the runaway loop at turn 55 and the report shows where the money went. The GIF at the top of this page is this demo.
 
 ## Limitations (v0.1)
 
-- **Streaming** responses that don't return usage aren't metered (spendcap warns once). Use `stream_options={"include_usage": True}` (OpenAI) or `meter.record()` manually.
+- **Streaming** responses that don't return usage aren't metered (spendcap warns once). Use `stream_options={"include_usage": True}` (OpenAI) or `meter.record()` manually. Full capture is [#3](https://github.com/ShreyanshGoyal/spendcap/issues/3).
 - Wrapping is duck-typed; `isinstance` checks against the SDK's client class won't see through the proxy (`client.__wrapped__` gives the original).
-- Budgets live in memory, per process. Persistence across restarts is on the roadmap.
+- Budgets live in memory, per process. Persistence is [#5](https://github.com/ShreyanshGoyal/spendcap/issues/5).
 
 ## Roadmap
 
-- Streaming usage capture
-- Per-provider price auto-refresh
-- Persistent ledgers (SQLite)
-- A CLI (`spendcap report`)
+Each item is an open issue with a design sketch; discussion welcome.
+
+- Streaming usage capture ([#3](https://github.com/ShreyanshGoyal/spendcap/issues/3))
+- A CLI for estimates and the price table ([#4](https://github.com/ShreyanshGoyal/spendcap/issues/4))
+- Persistent SQLite ledger, so caps survive restarts ([#5](https://github.com/ShreyanshGoyal/spendcap/issues/5))
+- Google Gemini SDK support ([#2](https://github.com/ShreyanshGoyal/spendcap/issues/2))
+- Prices for more providers ([#1](https://github.com/ShreyanshGoyal/spendcap/issues/1))
 - LangChain and agent-framework callbacks
 
 ## Contributing
 
-Issues and PRs are welcome, especially price-table updates and new provider usage shapes.
+Issues and PRs are welcome. The [good first issues](https://github.com/ShreyanshGoyal/spendcap/labels/good%20first%20issue) are genuinely small and self-contained: price-table updates and new provider usage shapes.
 
 ```bash
 pip install -e ".[dev]"
 pytest
 ```
+
+The only hard rule: spendcap stays zero-dependency.
 
 ## License
 
