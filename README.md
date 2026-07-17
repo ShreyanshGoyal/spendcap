@@ -7,6 +7,10 @@
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](pyproject.toml)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ShreyanshGoyal/spendcap/main/docs/demo.gif" alt="spendcap demo: the loop's cost is predicted up front, then a $1.00 hard cap stops a runaway agent loop at turn 55" width="733">
+</p>
+
 Your agent loop just spent $40 while you got coffee. Provider dashboards tell you *after* the money is gone. `spendcap` stops the loop *before* the next call, and tells you what a loop will cost before you run it at all.
 
 - 🧮 **Exact metering.** Costs computed from the token counts your provider returns, not tokenizer guesses.
