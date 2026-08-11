@@ -3,8 +3,9 @@
 <p align="center"><b>Real-time spend tracking, cost prediction, and runaway-loop circuit breakers for LLM API calls.</b></p>
 
 <p align="center">
+  <a href="https://pypi.org/project/spendcap/"><img src="https://img.shields.io/pypi/v/spendcap" alt="PyPI version"></a>
   <a href="https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml"><img src="https://github.com/ShreyanshGoyal/spendcap/actions/workflows/test.yml/badge.svg" alt="tests"></a>
-  <a href="https://github.com/ShreyanshGoyal/spendcap"><img src="https://img.shields.io/badge/python-3.9%2B-blue" alt="python 3.9+"></a>
+  <a href="https://pypi.org/project/spendcap/"><img src="https://img.shields.io/badge/python-3.9%2B-blue" alt="python 3.9+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="zero dependencies"></a>
 </p>
@@ -52,10 +53,16 @@ These tools are complementary, not competing: platforms like Langfuse or Helicon
 ## Installation
 
 ```bash
-pip install git+https://github.com/ShreyanshGoyal/spendcap.git
+pip install spendcap
 ```
 
-Python 3.9+, no runtime dependencies. A PyPI release is coming soon.
+Python 3.9+, no runtime dependencies.
+
+For the unreleased main branch:
+
+```bash
+pip install git+https://github.com/ShreyanshGoyal/spendcap.git
+```
 
 ## Quickstart
 
